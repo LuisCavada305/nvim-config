@@ -60,10 +60,15 @@ return {
           type = "python",
           request = "launch",
           program = "${file}",
-          -- Debug with the active virtualenv's interpreter, if any
+          -- Debug with the active virtualenv's interpreter, if any. On Windows venvs use
+          -- Scripts\python.exe, and `python3` is usually the Microsoft Store stub.
           pythonPath = function()
+            local is_win = vim.fn.has("win32") == 1
             local venv = os.getenv("VIRTUAL_ENV")
-            return venv and (venv .. "/bin/python") or "python3"
+            if venv then
+              return is_win and (venv .. "\\Scripts\\python.exe") or (venv .. "/bin/python")
+            end
+            return is_win and "python" or "python3"
           end,
         },
       }
