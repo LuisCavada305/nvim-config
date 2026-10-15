@@ -41,6 +41,7 @@ return {
         { "<leader>a", group = "ai/claude" },
         { "<leader>b", group = "buffer" },
         { "<leader>c", group = "code" },
+        { "<leader>d", group = "debug" },
         { "<leader>f", group = "find" },
         { "<leader>g", group = "git" },
         { "<leader>h", group = "hunk" },

@@ -10,6 +10,32 @@ Configuração pessoal do Neovim (>= 0.11), gerida com [lazy.nvim](https://githu
 
 Leader = `Espaço`. Carrega `<leader>` e espera para o which-key mostrar os atalhos.
 
+## Debug de APIs
+
+`F5` abre a lista de configurações (depende do tipo do ficheiro aberto):
+
+| Linguagem | Configuração | O que faz |
+|---|---|---|
+| Python | `API: FastAPI (uvicorn)` | `uvicorn <app> --port <porta>` (pergunta `main:app` e `8000`) |
+| Python | `API: Flask` | `flask --app <app> run` |
+| Python | `API: Django` | `manage.py runserver --noreload` |
+| Python | `Attach to debugpy (port 5678)` | Liga-se a `python -m debugpy --listen 5678 -m uvicorn main:app` |
+| JS/TS | `API: npm run <script>` | Corre um script do `package.json` (ex.: `dev`), funciona com tsx/ts-node/nodemon |
+| JS/TS | `Attach to node process` | Escolhe um processo `node --inspect` em execução |
+
+- O Python usa o venv ativo; senão, `.venv/` ou `venv/` na pasta do projeto; senão, o Python do sistema.
+- O auto-reload fica desligado nas APIs Python (os breakpoints não funcionam no processo filho do reloader). Depois de editar, `<leader>dr` reinicia.
+- Se o projeto tiver `.vscode/launch.json`, as configurações dele também aparecem no `F5`.
+
+| Atalho | Ação |
+|---|---|
+| `F5` | Iniciar / continuar |
+| `F9` / `<leader>dc` | Breakpoint / breakpoint condicional |
+| `F10` / `F11` / `F12` | Step over / into / out |
+| `<leader>dq` | Parar o debug (e o servidor) |
+| `<leader>dr` | Repetir a última configuração |
+| `<leader>du` | Mostrar/esconder a UI do debug |
+
 ## Fontes
 
 A pasta `fonts/` traz a **JetBrainsMono Nerd Font Mono** (licença SIL OFL, ver `fonts/OFL.txt`),
