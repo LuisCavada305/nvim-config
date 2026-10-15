@@ -16,7 +16,7 @@ Leader = `Espaço`. Carrega `<leader>` e espera para o which-key mostrar os atal
 
 | Linguagem | Configuração | O que faz |
 |---|---|---|
-| Python | `API: FastAPI (uvicorn)` | `uvicorn <app> --port <porta>` (pergunta `main:app` e `8000`) |
+| Python | `API: ASGI via uvicorn` | FastAPI, Litestar, Starlette: `uvicorn <app> --port <porta>` (pergunta `main:app` e `8000`) |
 | Python | `API: Flask` | `flask --app <app> run` |
 | Python | `API: Django` | `manage.py runserver --noreload` |
 | Python | `Attach to debugpy (port 5678)` | Liga-se a `python -m debugpy --listen 5678 -m uvicorn main:app` |
@@ -25,6 +25,9 @@ Leader = `Espaço`. Carrega `<leader>` e espera para o which-key mostrar os atal
 
 - O Python usa o venv ativo; senão, `.venv/` ou `venv/` na pasta do projeto; senão, o Python do sistema.
 - O auto-reload fica desligado nas APIs Python (os breakpoints não funcionam no processo filho do reloader). Depois de editar, `<leader>dr` reinicia.
+- **Debugar uma API que já está a correr:** ela tem de ser iniciada com o debugpy, por exemplo
+  `python -m debugpy --listen 5678 -m uvicorn app:app --reload` (ou `litestar run` trocando por `-m litestar run`).
+  Depois `F5` → `Attach to debugpy (port 5678)`. Assim o `--reload` pode ficar ligado.
 - Se o projeto tiver `.vscode/launch.json`, as configurações dele também aparecem no `F5`.
 
 | Atalho | Ação |
@@ -32,7 +35,7 @@ Leader = `Espaço`. Carrega `<leader>` e espera para o which-key mostrar os atal
 | `F5` | Iniciar / continuar |
 | `F9` / `<leader>dc` | Breakpoint / breakpoint condicional |
 | `F10` / `F11` / `F12` | Step over / into / out |
-| `<leader>dq` | Parar o debug (e o servidor) |
+| `<leader>dq` | Parar o debug (e o servidor); em attach só desliga e o servidor continua |
 | `<leader>dr` | Repetir a última configuração |
 | `<leader>du` | Mostrar/esconder a UI do debug |
 

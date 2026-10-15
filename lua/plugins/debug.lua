@@ -2,8 +2,9 @@
 -- Without debug info (-g) breakpoints can't map to source lines, and with
 -- optimizations on, stepping jumps around and variables show as "optimized out".
 --
--- APIs: <F5> lists the server configurations below (FastAPI, Flask, Django, npm script...).
--- The server keeps running until stopped with <leader>dq. A project's .vscode/launch.json,
+-- APIs: <F5> lists the server configurations below (FastAPI/Litestar, Flask, Django, npm
+-- script...). The server keeps running until stopped with <leader>dq, which only detaches
+-- (leaving the server up) when attached to one started outside nvim. A project's .vscode/launch.json,
 -- if present, is also read by nvim-dap and its entries show up in the same list.
 
 local is_win = vim.fn.has("win32") == 1
@@ -41,7 +42,20 @@ return {
       { "<F11>", function() require("dap").step_into() end, desc = "Debug: step into" },
       { "<F12>", function() require("dap").step_out() end, desc = "Debug: step out" },
       { "<F9>", function() require("dap").toggle_breakpoint() end, desc = "Debug: toggle breakpoint" },
-      { "<leader>dq", function() require("dap").terminate() end, desc = "Stop debugging" },
+      {
+        "<leader>dq",
+        function()
+          local dap = require("dap")
+          local session = dap.session()
+          -- Attached to a server started outside nvim: detach and leave it running
+          if session and session.config.request == "attach" then
+            dap.disconnect({ terminateDebuggee = false })
+          else
+            dap.terminate()
+          end
+        end,
+        desc = "Stop debugging (detach if attached)",
+      },
       { "<leader>dr", function() require("dap").run_last() end, desc = "Rerun last configuration" },
       { "<leader>du", function() require("dapui").toggle() end, desc = "Toggle debug UI" },
       {
@@ -64,8 +78,32 @@ return {
             config.configurations = nil
             require("mason-nvim-dap").default_setup(config)
           end,
+          python = function() end, -- adapter defined below
         },
       })
+
+      -- Launch: run debugpy's adapter from mason's venv (avoids the .cmd shim on Windows).
+      -- Attach: a server started with `debugpy --listen` already speaks DAP, so connect
+      -- to it directly instead of spawning a second adapter.
+      dap.adapters.python = function(callback, config)
+        if config.request == "attach" then
+          local connect = config.connect or {}
+          callback({
+            type = "server",
+            host = connect.host or "127.0.0.1",
+            port = connect.port or 5678,
+            options = { source_filetype = "python" },
+          })
+        else
+          local venv = vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv"
+          callback({
+            type = "executable",
+            command = venv .. (is_win and "/Scripts/python.exe" or "/bin/python"),
+            args = { "-m", "debugpy.adapter" },
+            options = { source_filetype = "python" },
+          })
+        end
+      end
 
       -- mason-nvim-dap installs js-debug-adapter but has no adapter mapping for it.
       -- Running its server script through node avoids spawning a .cmd shim on Windows.
@@ -86,6 +124,7 @@ return {
       dap.listeners.after.event_initialized["dapui_config"] = dapui.open
       dap.listeners.before.event_terminated["dapui_config"] = dapui.close
       dap.listeners.before.event_exited["dapui_config"] = dapui.close
+      dap.listeners.before.disconnect["dapui_config"] = dapui.close
 
       dap.configurations.cpp = {
         {
@@ -112,7 +151,7 @@ return {
           pythonPath = python_path,
         },
         {
-          name = "API: FastAPI (uvicorn)",
+          name = "API: ASGI via uvicorn (FastAPI, Litestar, Starlette)",
           type = "python",
           request = "launch",
           module = "uvicorn",
