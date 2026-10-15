@@ -25,6 +25,34 @@ opt.splitbelow = true
 opt.ignorecase = true
 opt.smartcase = true
 
+-- Show the diagnostic message at the end of the line (off by default), tagged with its source
+vim.diagnostic.config({
+  virtual_text = { source = "if_many", spacing = 2, prefix = "●" },
+  severity_sort = true,
+  float = { border = "rounded", source = true },
+})
+
+-- <leader>t toggles a terminal in a split at the bottom; the shell keeps running while hidden
+local term_buf
+vim.keymap.set("n", "<leader>t", function()
+  if term_buf and vim.api.nvim_buf_is_valid(term_buf) then
+    local win = vim.fn.bufwinid(term_buf)
+    if win ~= -1 then
+      vim.api.nvim_win_hide(win)
+      return
+    end
+    vim.cmd("botright 15split")
+    vim.api.nvim_win_set_buf(0, term_buf)
+  else
+    vim.cmd("botright 15split")
+    vim.cmd(vim.fn.has("win32") == 1 and "terminal powershell.exe -NoLogo" or "terminal")
+    term_buf = vim.api.nvim_get_current_buf()
+  end
+  vim.cmd("startinsert")
+end, { desc = "Toggle terminal" })
+-- Esc leaves terminal mode (use C-w h/j/k/l afterwards to move between windows)
+vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
 -- Faster CursorHold (gitsigns, LSP highlights) and shorter wait for mapped sequences
 opt.updatetime = 250
 opt.timeoutlen = 400

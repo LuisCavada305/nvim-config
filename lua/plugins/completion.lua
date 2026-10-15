@@ -1,4 +1,4 @@
-local servers = { "lua_ls", "pyright", "clangd", "ts_ls", "gopls" }
+local servers = { "lua_ls", "pyright", "ruff", "clangd", "ts_ls", "gopls" }
 
 return {
   -- Mason puts its bin/ on PATH, so servers it installs are found by vim.lsp.enable
@@ -34,6 +34,11 @@ return {
         },
       })
 
+      -- ruff handles lint, import sorting and formatting; pyright keeps hover and types
+      vim.lsp.config("ruff", {
+        on_attach = function(client) client.server_capabilities.hoverProvider = false end,
+      })
+
       vim.lsp.enable(servers)
 
       -- Go: gofmt via gopls on save (the Go convention; nobody hand-formats Go)
@@ -42,6 +47,19 @@ return {
         pattern = "*.go",
         callback = function(args)
           vim.lsp.buf.format({ bufnr = args.buf, name = "gopls", timeout_ms = 2000 })
+        end,
+      })
+
+      -- Format Python with ruff on save (fix lint issues and sort imports first)
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        group = vim.api.nvim_create_augroup("ruff-format-on-save", { clear = true }),
+        pattern = "*.py",
+        callback = function(args)
+          vim.lsp.buf.code_action({
+            context = { only = { "source.fixAll.ruff", "source.organizeImports.ruff" }, diagnostics = {} },
+            apply = true,
+          })
+          vim.lsp.buf.format({ bufnr = args.buf, name = "ruff", timeout_ms = 2000 })
         end,
       })
 
