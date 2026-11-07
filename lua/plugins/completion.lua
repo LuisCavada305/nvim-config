@@ -1,4 +1,4 @@
-local servers = { "lua_ls", "pyright", "clangd", "ts_ls" }
+local servers = { "lua_ls", "pyright", "clangd", "ts_ls", "gopls" }
 
 return {
   -- Mason puts its bin/ on PATH, so servers it installs are found by vim.lsp.enable
@@ -35,6 +35,15 @@ return {
       })
 
       vim.lsp.enable(servers)
+
+      -- Go: gofmt via gopls on save (the Go convention; nobody hand-formats Go)
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        group = vim.api.nvim_create_augroup("go-format-on-save", { clear = true }),
+        pattern = "*.go",
+        callback = function(args)
+          vim.lsp.buf.format({ bufnr = args.buf, name = "gopls", timeout_ms = 2000 })
+        end,
+      })
 
       -- Neovim 0.11+ ships global gr* LSP maps (grr, grn, gra...). With `gr` mapped below,
       -- they would make `gr` wait for 'timeoutlen'; remove them since we have our own.

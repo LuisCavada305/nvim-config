@@ -1,4 +1,7 @@
 return {
+  -- Auto-close (), [], {}, "" and ''; <CR> between {} opens an indented block
+  { "windwp/nvim-autopairs", event = "InsertEnter", opts = {} },
+
   {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
@@ -88,6 +91,14 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" },
     keys = {
       { "<leader>gg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
+    },
+  },
+
+  {
+    "folke/snacks.nvim",
+    keys = {
+      -- Bottom split terminal; same keypress hides it again (Esc Esc first to leave terminal mode)
+      { "<leader>t", function() Snacks.terminal.toggle() end, desc = "Toggle terminal" },
     },
   },
 

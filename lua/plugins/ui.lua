@@ -4,6 +4,11 @@ return {
     lazy = false,
     priority = 1000, -- load before other UI plugins so they pick up its highlights
     config = function()
+      require("tokyonight").setup({
+        -- Let the terminal's background image show through; floats stay solid for readability
+        transparent = true,
+        styles = { sidebars = "transparent", floats = "dark" },
+      })
       vim.cmd.colorscheme("tokyonight-night")
     end,
   },
@@ -18,7 +23,7 @@ return {
     config = function()
       require("nvim-treesitter").install({
         "lua", "python", "c", "cpp", "cuda", "javascript", "typescript",
-        "tsx", "json", "yaml", "markdown", "bash",
+        "tsx", "json", "yaml", "markdown", "bash", "go", "gomod", "gosum",
       })
 
       vim.api.nvim_create_autocmd("FileType", {
