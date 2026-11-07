@@ -17,6 +17,9 @@ return {
     opts = {
       filesystem = {
         follow_current_file = { enabled = true },
+        -- Refresh the tree (and its git markers) when files are created, deleted or changed
+        -- on disk by anything, not only by nvim (Claude, cargo, git...)
+        use_libuv_file_watcher = true,
       },
     },
   },
