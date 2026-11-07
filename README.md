@@ -2,9 +2,9 @@
 
 Configuração pessoal do Neovim (>= 0.11), gerida com [lazy.nvim](https://github.com/folke/lazy.nvim).
 
-- **UI:** tokyonight, lualine, bufferline, which-key, treesitter
-- **Código:** LSP nativo + mason (lua_ls, pyright, clangd, ts_ls), nvim-cmp + LuaSnip
-- **Fluxo:** neo-tree, telescope, gitsigns, lazygit, diffview
+- **UI:** tokyonight (fundo transparente), lualine, bufferline, which-key, treesitter
+- **Código:** LSP nativo + mason (lua_ls, pyright, clangd, ts_ls, gopls), nvim-cmp + LuaSnip, nvim-autopairs
+- **Fluxo:** neo-tree, telescope, gitsigns, lazygit, diffview, terminal (snacks.nvim), autosave e auto-reload
 - **Debug:** nvim-dap + dap-ui (Python incl. APIs FastAPI/Litestar/Flask/Django, Node/TS, C/C++)
 - **IA:** claudecode.nvim (integração com o Claude Code)
 
@@ -18,13 +18,14 @@ Configuração pessoal do Neovim (>= 0.11), gerida com [lazy.nvim](https://githu
 2. **Dependências** (PowerShell):
 
    ```powershell
-   winget install Neovim.Neovim Git.Git BurntSushi.ripgrep.MSVC sharkdp.fd JesseDuffield.lazygit OpenJS.NodeJS.LTS Python.Python.3.12 tree-sitter.tree-sitter-cli
+   winget install Neovim.Neovim Git.Git BurntSushi.ripgrep.MSVC sharkdp.fd JesseDuffield.lazygit OpenJS.NodeJS.LTS Python.Python.3.12 tree-sitter.tree-sitter-cli GoLang.Go
    winget install BrechtSanders.WinLibs.POSIX.UCRT   # gcc + make (mingw32-make)
    ```
 
    - `gcc`/`make` compilam o `telescope-fzf-native`, o `jsregexp` do LuaSnip e os parsers do treesitter.
      Se o `make` não for encontrado, cria um alias: `copy (Get-Command mingw32-make).Source "$(Split-Path (Get-Command mingw32-make).Source)\make.exe"`.
    - Node é usado pelo mason para instalar `pyright`, `ts_ls` e o debugger de JS.
+   - Go é usado pelo mason para instalar o `gopls` (`go install`).
    - Opcional: `winget install Anthropic.ClaudeCode` para o `<leader>ac`.
 
 3. **Clonar a config:**
@@ -43,7 +44,7 @@ git clone https://github.com/LuisCavada305/nvim-config ~/.config/nvim
 mkdir -p ~/.local/share/fonts && cp ~/.config/nvim/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f
 ```
 
-Precisa de `git`, `gcc`, `make`, `ripgrep`, `fd`, `node`, `python3`, `tree-sitter` (CLI) e `lazygit`.
+Precisa de `git`, `gcc`, `make`, `ripgrep`, `fd`, `node`, `python3`, `go`, `tree-sitter` (CLI) e `lazygit`.
 
 ---
 
@@ -64,6 +65,7 @@ Precisa de `git`, `gcc`, `make`, `ripgrep`, `fd`, `node`, `python3`, `tree-sitte
 | `<leader>g` | Git |
 | `<leader>h` | Hunks do git |
 | `<leader>r` | Renomear |
+| `<leader>t` | Terminal |
 
 ## Ficheiros e janelas
 
@@ -72,11 +74,21 @@ Precisa de `git`, `gcc`, `make`, `ripgrep`, `fd`, `node`, `python3`, `tree-sitte
 | `<leader>e` | Abrir/fechar o explorador (neo-tree) |
 | `S-l` / `S-h` | Buffer (aba) seguinte / anterior |
 | `<leader>bd` | Fechar o buffer atual |
-| `:w` / `:q` / `:wq` | Guardar / fechar / guardar e fechar |
+| `:w` / `:q` / `:wq` | Guardar / fechar / guardar e fechar (raramente preciso: ver *Autosave* abaixo) |
 | `C-w h/j/k/l` | Ir para a janela da esquerda/baixo/cima/direita |
 | `C-w v` / `C-w s` | Dividir na vertical / horizontal |
 | `C-w q` | Fechar a janela |
+| `<leader>t` | Abrir/fechar um terminal num split em baixo |
 | `C-\ C-n` | Sair do modo terminal (ex.: janela do Claude) para poder usar `C-w` |
+
+### Autosave e auto-reload
+
+- **Autosave:** o ficheiro é guardado ao sair do modo de inserção, depois de edições em modo normal
+  (`dd`, `p`, `u`...), ao mudar de buffer/janela e quando o nvim perde o foco. Não guarda a cada tecla
+  no modo de inserção.
+- **Auto-reload:** ficheiros alterados no disco (Claude, `cargo fmt`, `git pull`...) são recarregados
+  ao voltar o foco ao nvim, ao entrar num buffer, ao sair do terminal ou após ~250 ms parado.
+  Dentro do tmux precisa de `set -g focus-events on`.
 
 ### Dentro do explorador (neo-tree)
 
@@ -103,6 +115,14 @@ Precisa de `git`, `gcc`, `make`, `ripgrep`, `fd`, `node`, `python3`, `tree-sitte
 | `<leader>as` | Enviar o ficheiro ao Claude |
 | `q` | Fechar |
 | `?` | Ajuda com todas as teclas |
+
+## Edição
+
+| Atalho | Ação |
+|---|---|
+| `A-j` / `A-k` (ou `A-↓` / `A-↑`) | Mover a linha ou a seleção para baixo / cima, reindentando |
+
+`(`, `[`, `{`, `"` e `'` fecham automaticamente; `Enter` entre `{}` abre um bloco indentado.
 
 ## Procurar (telescope)
 
@@ -139,6 +159,8 @@ Dentro do telescope:
 | `C-o` / `C-i` | Voltar / avançar depois de saltar (ex.: após `gd`) |
 | `gcc` / `gc` (visual) | Comentar / descomentar linha / seleção |
 | `:Mason` | Gerir LSPs, debuggers e formatters |
+
+Os diagnósticos aparecem no fim da linha. Ficheiros Go são formatados (gofmt via gopls) ao guardar.
 
 ## Autocomplete e snippets (modo de inserção)
 
