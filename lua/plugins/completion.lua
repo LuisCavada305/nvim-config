@@ -47,7 +47,11 @@ return {
       -- Type checking is ty's job (below): with both on, the same mistake shows twice and the two
       -- disagree. basedpyright stays only for completion and the add-import code action.
       vim.lsp.config("basedpyright", {
-        on_attach = function(client) client.server_capabilities.hoverProvider = false end,
+        on_attach = function(client)
+          -- hover and signature help come from ty; with both, every popup shows twice
+          client.server_capabilities.hoverProvider = false
+          client.server_capabilities.signatureHelpProvider = nil
+        end,
         settings = {
           basedpyright = {
             analysis = {
@@ -125,6 +129,37 @@ return {
           map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
           vim.keymap.set({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action,
             { buffer = args.buf, desc = "Code action" })
+
+          -- Signature help while typing a call: opens on "(" and refreshes on "," (the current
+          -- parameter is highlighted), closes on ")" or leaving insert mode. <C-s> opens it by
+          -- hand (nvim default). One autocmd per buffer, even with several servers attached.
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if not (client and client:supports_method("textDocument/signatureHelp")) then return end
+          if vim.b[args.buf].signature_help_auto then return end
+          vim.b[args.buf].signature_help_auto = true
+          vim.api.nvim_create_autocmd("InsertCharPre", {
+            buffer = args.buf,
+            group = vim.api.nvim_create_augroup("signature-help-" .. args.buf, { clear = true }),
+            callback = function()
+              local char = vim.v.char
+              if char == "(" or char == "," then
+                vim.schedule(function()
+                  vim.lsp.buf.signature_help({
+                    border = "rounded",
+                    focusable = false,
+                    silent = true,
+                    -- the default also closes on every typed char, which kills it mid-argument
+                    close_events = { "CursorMoved", "InsertLeave", "BufLeave" },
+                  })
+                end)
+              elseif char == ")" then
+                local win = vim.b[args.buf].lsp_floating_preview
+                if win and vim.api.nvim_win_is_valid(win) then
+                  vim.schedule(function() pcall(vim.api.nvim_win_close, win, true) end)
+                end
+              end
+            end,
+          })
         end,
       })
     end,
