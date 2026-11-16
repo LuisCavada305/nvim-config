@@ -51,7 +51,7 @@ opt.updatetime = 250
 opt.timeoutlen = 400
 
 -- Diagnostics: on the cursor line, every message in full, wrapped below the line (virtual_lines);
--- on the other lines, just the short tail at the end. `gl` opens all of the line's messages in a
+-- on the other lines, only the underline and a dot at the end (no text). `gl` opens all of the line's messages in a
 -- float, and jumping with ]d / [d opens it too.
 -- Virtual lines never wrap on their own (they get cut at the window edge), but they do break on
 -- newlines: so wrap each message to the room left to the right of where the diagnostic starts.
@@ -76,7 +76,8 @@ local function wrap_diagnostic(diagnostic)
 end
 
 vim.diagnostic.config({
-  virtual_text = { current_line = false, source = "if_many", spacing = 2, prefix = "●" },
+  -- off the cursor line: underline + the dot, no text (the message shows when the cursor gets there)
+  virtual_text = { current_line = false, spacing = 2, prefix = "●", format = function() return "" end },
   virtual_lines = { current_line = true, format = wrap_diagnostic },
   severity_sort = true,
   float = { border = "rounded", source = true },
