@@ -25,13 +25,6 @@ opt.splitbelow = true
 opt.ignorecase = true
 opt.smartcase = true
 
--- Show the diagnostic message at the end of the line (off by default), tagged with its source
-vim.diagnostic.config({
-  virtual_text = { source = "if_many", spacing = 2, prefix = "●" },
-  severity_sort = true,
-  float = { border = "rounded", source = true },
-})
-
 -- <leader>t toggles a terminal in a split at the bottom; the shell keeps running while hidden
 local term_buf
 vim.keymap.set("n", "<leader>t", function()
@@ -57,12 +50,40 @@ vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" }
 opt.updatetime = 250
 opt.timeoutlen = 400
 
--- Show diagnostic messages at the end of the line (off by default since nvim 0.11)
+-- Diagnostics: on the cursor line, every message in full, wrapped below the line (virtual_lines);
+-- on the other lines, just the short tail at the end. `gl` opens all of the line's messages in a
+-- float, and jumping with ]d / [d opens it too.
+-- Virtual lines never wrap on their own (they get cut at the window edge), but they do break on
+-- newlines: so wrap each message to the room left to the right of where the diagnostic starts.
+local function wrap_diagnostic(diagnostic)
+  local text = (diagnostic.source and ("[" .. diagnostic.source .. "] ") or "") .. diagnostic.message
+  local gutter = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].textoff
+  local width = math.max(30, vim.api.nvim_win_get_width(0) - gutter - diagnostic.col - 6)
+  local lines = {}
+  for paragraph in text:gmatch("[^\n]+") do
+    local line = ""
+    for word in paragraph:gmatch("%S+") do
+      if line ~= "" and #line + 1 + #word > width then
+        table.insert(lines, line)
+        line = word
+      else
+        line = line == "" and word or (line .. " " .. word)
+      end
+    end
+    table.insert(lines, line)
+  end
+  return table.concat(lines, "\n")
+end
+
 vim.diagnostic.config({
-  virtual_text = { spacing = 2, prefix = "●" },
+  virtual_text = { current_line = false, source = "if_many", spacing = 2, prefix = "●" },
+  virtual_lines = { current_line = true, format = wrap_diagnostic },
   severity_sort = true,
   float = { border = "rounded", source = true },
+  jump = { float = true },
 })
+vim.keymap.set("n", "gl", function() vim.diagnostic.open_float({ scope = "line" }) end,
+  { desc = "Line diagnostics" })
 
 -- Move line/selection up and down, re-indenting it (Alt+j/k, or Alt+arrows like VSCode)
 local map = vim.keymap.set
